@@ -1,0 +1,378 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Invoice Management System{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            padding: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-brand {
+            padding: 20px 15px;
+            text-align: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-brand i {
+            margin-right: 10px;
+        }
+        
+        .sidebar-menu {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .sidebar-menu li a {
+            display: block;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .sidebar-menu li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-menu .menu-label {
+            padding: 10px 20px;
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .sidebar-menu .has-sub > a::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            float: right;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu .has-sub.active > a::after {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-menu .sub-menu {
+            display: none;
+            list-style: none;
+            padding: 0;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .sidebar-menu .sub-menu li a {
+            padding-left: 50px;
+            font-size: 14px;
+        }
+        
+        .sidebar-menu .sub-menu.active {
+            display: block;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .navbar-top {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .navbar-top .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .navbar-top .user-info .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .stat-card .icon.blue { background: #e8f4fd; color: #3498db; }
+        .stat-card .icon.green { background: #e8fdf4; color: #2ecc71; }
+        .stat-card .icon.purple { background: #f4e8fd; color: #9b59b6; }
+        .stat-card .icon.orange { background: #fdf4e8; color: #f39c12; }
+        
+        .stat-card .stats-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+                /* Let the table fit the card perfectly */
+        .table {
+            width: 100% !important;
+            table-layout: auto;
+        }
+        
+        /* Stop weird gaps in headers */
+        .table th, .table td {
+            padding: 12px 15px !important;
+            vertical-align: middle;
+        }
+
+        /* Push Actions to the right */
+        .table th:last-child,
+        .table td:last-child {
+            text-align: right;
+            width: 1%; /* Forces it to the edge */
+        }
+        
+
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            .sidebar-brand span {
+                display: none;
+            }
+            .sidebar-menu li a span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 60px;
+            }
+            .sidebar-brand i {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-file-invoice"></i>
+            <span>InvoiceMS</span>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li class="menu-label">Main Menu</li>
+            
+            <li>
+                <a href="{% url 'core:dashboard' %}" class="{% if request.path == '/' or '/dashboard' in request.path %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            <li class="has-sub {% if 'invoices' in request.path %}active{% endif %}">
+                <a href="#">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Invoices</span>
+                </a>
+                <ul class="sub-menu {% if 'invoices' in request.path %}active{% endif %}">
+                    <li><a href="{% url 'invoices:invoice_create' %}" class="{% if 'create' in request.path %}active{% endif %}"><i class="fas fa-plus"></i> Create Invoice</a></li>
+                    <li><a href="{% url 'invoices:invoice_list' %}" class="{% if 'invoice_list' in request.path %}active{% endif %}"><i class="fas fa-list"></i> Invoice List</a></li>
+                </ul>
+            </li>
+            
+            <li class="has-sub {% if 'products' in request.path %}active{% endif %}">
+                <a href="#">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </a>
+                <ul class="sub-menu {% if 'products' in request.path %}active{% endif %}">
+                    <li><a href="{% url 'products:product_create' %}" class="{% if 'create' in request.path %}active{% endif %}"><i class="fas fa-plus"></i> Add Product</a></li>
+                    <li><a href="{% url 'products:product_list' %}" class="{% if 'product_list' in request.path %}active{% endif %}"><i class="fas fa-list"></i> Product List</a></li>
+                </ul>
+            </li>
+            
+            <li class="has-sub {% if 'customers' in request.path %}active{% endif %}">
+                <a href="#">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </a>
+                <ul class="sub-menu {% if 'customers' in request.path %}active{% endif %}">
+                    <li><a href="{% url 'customers:customer_create' %}" class="{% if 'create' in request.path %}active{% endif %}"><i class="fas fa-user-plus"></i> Add Customer</a></li>
+                    <li><a href="{% url 'customers:customer_list' %}" class="{% if 'customer_list' in request.path %}active{% endif %}"><i class="fas fa-list"></i> Customer List</a></li>
+                </ul>
+            </li>
+            
+            <!--  ADMIN ONLY MENU  -->
+            {% if request.user.is_superuser %}
+            <li class="has-sub {% if 'users' in request.path %}active{% endif %}">
+                <a href="#">
+                    <i class="fas fa-user-cog"></i>
+                    <span>System Users</span>
+                </a>
+                <ul class="sub-menu {% if 'users' in request.path %}active{% endif %}">
+                    <li><a href="{% url 'users:user_list' %}" class="{% if 'user_list' in request.path %}active{% endif %}"><i class="fas fa-list"></i> Manage Users</a></li>
+                </ul>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{% block page_title %}{% endblock %}</h5>
+                <div class="user-info">
+                    <!-- FIXED: Shows Full Name or falls back to Username -->
+                    <span>Welcome, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+                    <div class="avatar">{{ request.user.first_name|first|default:request.user.username|first|upper }}</div>
+                    <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        $(document).ready(function() {
+            // Toggle sub-menus
+            $('.has-sub > a').click(function(e) {
+                e.preventDefault();
+                $(this).parent().toggleClass('active');
+                $(this).siblings('.sub-menu').toggleClass('active');
+            });
+            
+            // DataTables initialization
+            if ($.fn.dataTable) {
+                $('.datatable').DataTable({
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries"
+                    }
+                });
+            }
+            
+            // Select2 initialization
+            if ($.fn.select2) {
+                $('.select2').select2({
+                    theme: 'bootstrap-5'
+                });
+            }
+            
+            // Delete confirmation
+            $('.delete-btn').click(function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to delete this item?')) {
+                    $(this).closest('form').submit();
+                }
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert-dismissible').fadeTo(500, 0, function() {
+                    $(this).slideUp(500, function() {
+                        $(this).remove();
+                    });
+                });
+            }, 5000);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

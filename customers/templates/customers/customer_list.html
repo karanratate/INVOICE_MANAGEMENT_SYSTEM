@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Customer List - Invoice Management System{% endblock %}
+{% block page_title %}Customer List{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i> Manage Customers</h5>
+        <a href="{% url 'customers:customer_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Customer
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="customerTable">
+                <thead>
+                    <tr>
+                        <th>Sr.</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Country</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ customer.name }}</strong></td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone|default:"-" }}</td>
+                        <td>{{ customer.city|default:"-" }}</td>
+                        <td>{{ customer.country|default:"-" }}</td>
+                        <td>
+                            <div class="d-flex gap-2" role="group">
+                                <!-- Edit -->
+                                <a href="{% url 'customers:customer_edit' customer.id %}"
+                                   class="btn btn-primary btn-sm"
+                                   title="Edit Customer">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <!-- Delete -->
+                                <form method="post"
+                                      action="{% url 'customers:customer_delete' customer.id %}"
+                                      class="d-inline m-0"
+                                      onsubmit="return confirm('Are you sure you want to delete customer {{ customer.name }}?\n\nThis action cannot be undone!');">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm"
+                                            title="Delete Customer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-user-friends fa-4x text-muted mb-3 d-block"></i>
+                            <h5 class="text-muted">No customers found</h5>
+                            <p class="text-muted">Add your first customer to get started.</p>
+                            <a href="{% url 'customers:customer_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i> Add Customer
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" title="First">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-angle-left"></i> Previous
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i> Previous</span>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        Next <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" title="Last">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next <i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="text-center text-muted small">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
+            of {{ page_obj.paginator.count }} customers
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

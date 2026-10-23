@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Edit User - Invoice Management System{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-edit me-2"></i> Editing User ({{ user.id }})</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="userForm">
+            {% csrf_token %}
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label">First Name</label>
+                    <input type="text" name="first_name" id="first_name" class="form-control" value="{{ user.first_name|default:'' }}" placeholder="Enter first name">
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <input type="text" name="last_name" id="last_name" class="form-control" value="{{ user.last_name|default:'' }}" placeholder="Enter last name">
+                </div>
+                <div class="col-md-12">
+                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                    <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}" required>
+                </div>
+                <div class="col-md-12">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control" value="{{ user.email }}" required>
+                </div>
+                <div class="col-md-12">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Enter new password (leave blank to keep current)">
+                    <div class="form-text">Leave blank to keep current password.</div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i> Update User
+                </button>
+                <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

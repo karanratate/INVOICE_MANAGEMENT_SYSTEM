@@ -1,0 +1,102 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Add Product - Invoice Management System{% endblock %}
+{% block page_title %}Add Product{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-plus me-2"></i> Add New Product</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'products:product_create' %}" id="productForm">
+            {% csrf_token %}
+
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label for="product_name" class="form-label">
+                        Product Name <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           name="product_name"
+                           id="product_name"
+                           class="form-control"
+                           placeholder="Enter product name"
+                           required
+                           autofocus>
+                </div>
+
+                <div class="col-12">
+                    <label for="product_desc" class="form-label">Description</label>
+                    <textarea name="product_desc"
+                              id="product_desc"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Enter product description (optional)"></textarea>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="product_price" class="form-label">
+                        Price <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">{{ currency_symbol }}</span>
+                        <input type="text"
+                               name="product_price"
+                               id="product_price"
+                               class="form-control"
+                               inputmode="decimal"
+                               placeholder="0.00"
+                               required>
+                    </div>
+                    <!-- <div class="form-text">Enter only numbers (e.g. 199.99)</div> -->
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i> Save Product
+                </button>
+                <a href="{% url 'products:product_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Allow only digits and one dot in price
+    $('#product_price').on('keypress', function(e) {
+        const char = String.fromCharCode(e.which);
+        if (!/[0-9.]/.test(char) && e.which !== 8 && e.which !== 0 && e.which !== 46) {
+            e.preventDefault();
+        }
+        if (char === '.' && $(this).val().includes('.')) {
+            e.preventDefault();
+        }
+    });
+
+    // Format price on blur
+    $('#product_price').on('blur', function() {
+        const val = $(this).val().trim();
+        if (val === '' || val === '.') {
+            $(this).val('');
+        } else {
+            const num = parseFloat(val);
+            if (!isNaN(num)) {
+                $(this).val(num.toFixed(2));
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

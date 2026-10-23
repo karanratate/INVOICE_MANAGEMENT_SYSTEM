@@ -1,0 +1,365 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Edit Invoice - Invoice Management System{% endblock %}
+{% block page_title %}Edit Invoice{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-edit me-2"></i> Editing Invoice ({{ invoice.invoice_number }})</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="invoiceForm">
+            {% csrf_token %}
+            
+            <!-- Invoice Header -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-bold me-2">Select Type:</label>
+                        <select name="invoice_type" class="form-select form-select-sm w-auto">
+                            <option value="invoice" {% if invoice.invoice_type == 'invoice' %}selected{% endif %}>Invoice</option>
+                            <option value="quote" {% if invoice.invoice_type == 'quote' %}selected{% endif %}>Quote</option>
+                            <option value="receipt" {% if invoice.invoice_type == 'receipt' %}selected{% endif %}>Receipt</option>
+                        </select>
+                        <select name="invoice_status" class="form-select form-select-sm w-auto">
+                            <option value="draft" {% if invoice.status == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="open" {% if invoice.status == 'open' %}selected{% endif %}>Open</option>
+                            <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="cancelled" {% if invoice.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="date" name="invoice_date" class="form-control form-control-sm" value="{{ invoice.issue_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="date" name="invoice_due_date" class="form-control form-control-sm" value="{{ invoice.due_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">{{ invoice_prefix }}</span>
+                                <input type="text" name="invoice_id" class="form-control" value="{{ invoice.invoice_number }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer & Shipping -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Customer Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_name" class="form-control form-control-sm" value="{{ invoice.customer.name }}" placeholder="Name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="email" name="customer_email" class="form-control form-control-sm" value="{{ invoice.customer.email }}" placeholder="Email" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_1" class="form-control form-control-sm" value="{{ invoice.customer.address_line1 }}" placeholder="Address 1" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_2" class="form-control form-control-sm" value="{{ invoice.customer.address_line2|default:'' }}" placeholder="Address 2">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_town" class="form-control form-control-sm" value="{{ invoice.customer.city }}" placeholder="Town/City" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_county" class="form-control form-control-sm" value="{{ invoice.customer.state }}" placeholder="State/County" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_postcode" class="form-control form-control-sm" value="{{ invoice.customer.postal_code }}" placeholder="Postcode" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_phone" class="form-control form-control-sm" value="{{ invoice.customer.phone|default:'' }}" placeholder="Phone Number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Shipping Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_name_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_name|default:'' }}" placeholder="Name">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_address_1_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_address_line1|default:'' }}" placeholder="Address 1">
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_2_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_address_line2|default:'' }}" placeholder="Address 2">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_town_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_city|default:'' }}" placeholder="Town/City">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_county_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_state|default:'' }}" placeholder="State/County">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_postcode_ship" class="form-control form-control-sm" value="{{ invoice.customer.shipping_postal_code|default:'' }}" placeholder="Postcode">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Invoice Items -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Invoice Items</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="itemsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Product / Description</th>
+                                    <th style="width: 10%;">Qty</th>
+                                    <th style="width: 15%;">Price</th>
+                                    <th style="width: 15%;">Discount</th>
+                                    <th style="width: 15%;">Subtotal</th>
+                                    <th style="width: 5%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                {% for item in invoice.items.all %}
+                                <tr>
+                                    <td>
+                                        <input type="text" name="invoice_product[]" class="form-control form-control-sm" value="{{ item.description }}" placeholder="Enter product name">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="invoice_product_qty[]" class="form-control form-control-sm item-qty" value="{{ item.quantity }}" min="1">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="number" name="invoice_product_price[]" class="form-control form-control-sm item-price" step="0.01" value="{{ item.price }}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="invoice_product_discount[]" class="form-control form-control-sm item-discount" value="{{ item.discount }}" placeholder="0 or 10%">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="text" name="invoice_product_sub[]" class="form-control form-control-sm item-subtotal" value="{{ item.subtotal|floatformat:2 }}" readonly>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item" {% if forloop.first %}style="display: none;"{% endif %}>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td>
+                                        <input type="text" name="invoice_product[]" class="form-control form-control-sm" placeholder="Enter product name">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="invoice_product_qty[]" class="form-control form-control-sm item-qty" value="1" min="1">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="number" name="invoice_product_price[]" class="form-control form-control-sm item-price" step="0.01" value="0">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="invoice_product_discount[]" class="form-control form-control-sm item-discount" placeholder="0 or 10%">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="text" name="invoice_product_sub[]" class="form-control form-control-sm item-subtotal" value="0.00" readonly>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item" style="display: none;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6">
+                                        <button type="button" class="btn btn-success btn-sm" id="addItem">
+                                            <i class="fas fa-plus"></i> Add Item
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Totals -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <textarea name="invoice_notes" class="form-control" rows="3" placeholder="Additional Notes...">{{ invoice.notes }}</textarea>
+                            <textarea name="custom_email" class="form-control mt-2" rows="2" placeholder="Custom email message (optional)">{{ invoice.custom_email_message }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Subtotal:</strong></div>
+                                <div class="col-6 text-end">{{ currency_symbol }} <span id="subtotalDisplay">{{ invoice.subtotal|floatformat:2 }}</span></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Discount:</strong></div>
+                                <div class="col-6 text-end">{{ currency_symbol }} <span id="discountDisplay">{{ invoice.discount|floatformat:2 }}</span></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Shipping:</strong></div>
+                                <div class="col-6 text-end">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">{{ currency_symbol }}</span>
+                                        <input type="number" name="invoice_shipping" class="form-control form-control-sm" id="shippingInput" step="0.01" value="{{ invoice.shipping|floatformat:2 }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6 text-end"><strong>Total:</strong></div>
+                                <div class="col-6 text-end"><strong>{{ currency_symbol }} <span id="totalDisplay">{{ invoice.total|floatformat:2 }}</span></strong></div>
+                            </div>
+                            
+                            <input type="hidden" name="invoice_subtotal" id="invoiceSubtotal" value="{{ invoice.subtotal }}">
+                            <input type="hidden" name="invoice_discount" id="invoiceDiscount" value="{{ invoice.discount }}">
+                            <input type="hidden" name="invoice_total" id="invoiceTotal" value="{{ invoice.total }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i> Update Invoice
+                </button>
+                <a href="{% url 'invoices:invoice_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add item row
+    $('#addItem').click(function() {
+        const newRow = $('#itemsBody tr:last').clone();
+        newRow.find('input').val('');
+        newRow.find('.item-qty').val(1);
+        newRow.find('.item-price').val(0);
+        newRow.find('.item-subtotal').val('0.00');
+        newRow.find('.remove-item').show();
+        $('#itemsBody').append(newRow);
+        calculateTotals();
+    });
+    
+    // Remove item row
+    $(document).on('click', '.remove-item', function() {
+        if ($('#itemsBody tr').length > 1) {
+            $(this).closest('tr').remove();
+            calculateTotals();
+        }
+    });
+    
+    // Calculate item subtotal
+    $(document).on('input', '.item-qty, .item-price, .item-discount', function() {
+        const row = $(this).closest('tr');
+        const qty = parseFloat(row.find('.item-qty').val()) || 0;
+        const price = parseFloat(row.find('.item-price').val()) || 0;
+        let discount = row.find('.item-discount').val() || '0';
+        let subtotal = qty * price;
+        
+        if (discount) {
+            if (discount.includes('%')) {
+                const percent = parseFloat(discount) / 100;
+                subtotal = subtotal * (1 - percent);
+            } else {
+                subtotal = subtotal - parseFloat(discount);
+            }
+        }
+        
+        row.find('.item-subtotal').val(subtotal.toFixed(2));
+        calculateTotals();
+    });
+    
+    // Calculate totals
+    function calculateTotals() {
+        let subtotal = 0;
+        let discount = 0;
+        
+        $('.item-subtotal').each(function() {
+            subtotal += parseFloat($(this).val()) || 0;
+        });
+        
+        // Calculate total discount
+        $('.item-discount').each(function() {
+            const val = $(this).val();
+            if (val) {
+                if (val.includes('%')) {
+                    const percent = parseFloat(val) / 100;
+                    const row = $(this).closest('tr');
+                    const qty = parseFloat(row.find('.item-qty').val()) || 0;
+                    const price = parseFloat(row.find('.item-price').val()) || 0;
+                    discount += (qty * price * percent);
+                } else {
+                    discount += parseFloat(val) || 0;
+                }
+            }
+        });
+        
+        const shipping = parseFloat($('#shippingInput').val()) || 0;
+        const vat = (subtotal - discount) * ({{ vat_rate|default:0 }} / 100);
+        const total = subtotal - discount + shipping + vat;
+        
+        $('#subtotalDisplay').text(subtotal.toFixed(2));
+        $('#discountDisplay').text(discount.toFixed(2));
+        $('#vatDisplay').text(vat.toFixed(2));
+        $('#totalDisplay').text(total.toFixed(2));
+        
+        $('#invoiceSubtotal').val(subtotal.toFixed(2));
+        $('#invoiceDiscount').val(discount.toFixed(2));
+        $('#invoiceVat').val(vat.toFixed(2));
+        $('#invoiceTotal').val(total.toFixed(2));
+    }
+    
+    // Shipping input change
+    $('#shippingInput').on('input', calculateTotals);
+    
+    // Initial calculation
+    calculateTotals();
+});
+</script>
+{% endblock %}

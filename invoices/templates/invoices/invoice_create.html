@@ -1,0 +1,436 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Create Invoice - Invoice Management System{% endblock %}
+{% block page_title %}Create New Invoice{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-plus me-2"></i> Create New Invoice</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'invoices:invoice_create' %}" id="invoiceForm">
+            {% csrf_token %}
+            
+            <!-- Invoice Header -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-bold me-2">Type:</label>
+                        <select name="invoice_type" class="form-select form-select-sm w-auto">
+                            <option value="invoice" selected>Invoice</option>
+                            <option value="quote">Quote</option>
+                            <option value="receipt">Receipt</option>
+                        </select>
+                        <select name="invoice_status" class="form-select form-select-sm w-auto">
+                            <option value="draft">Draft</option>
+                            <option value="open" selected>Open</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="date" name="invoice_date" class="form-control form-control-sm" value="{% now 'Y-m-d' %}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="date" name="invoice_due_date" class="form-control form-control-sm" value="{% now 'Y-m-d' %}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="invoice_id" class="form-control form-control-sm" value="{{ next_invoice_number }}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer & Shipping -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Customer Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_name" class="form-control form-control-sm" placeholder="Name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="email" name="customer_email" class="form-control form-control-sm" placeholder="Email" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_1" class="form-control form-control-sm" placeholder="Address 1" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_2" class="form-control form-control-sm" placeholder="Address 2">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_town" class="form-control form-control-sm" placeholder="Town/City" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_county" class="form-control form-control-sm" placeholder="State" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_postcode" class="form-control form-control-sm" placeholder="Postcode" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_phone" class="form-control form-control-sm" placeholder="Phone Number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Shipping Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_name_ship" class="form-control form-control-sm" placeholder="Name">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" name="customer_address_1_ship" class="form-control form-control-sm" placeholder="Address 1">
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" name="customer_address_2_ship" class="form-control form-control-sm" placeholder="Address 2">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_town_ship" class="form-control form-control-sm" placeholder="Town/City">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_county_ship" class="form-control form-control-sm" placeholder="State">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="customer_postcode_ship" class="form-control form-control-sm" placeholder="Postcode">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Invoice Items -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Invoice Items</h6>
+                    <button type="button" class="btn btn-success btn-sm" id="addItem">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="itemsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Product / Description</th>
+                                    <th style="width: 10%;">Qty</th>
+                                    <th style="width: 15%;">Price</th>
+                                    <th style="width: 15%;">Discount</th>
+                                    <th style="width: 15%;">Subtotal</th>
+                                    <th style="width: 5%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                <!--  DEFAULT ROW WITH CUSTOM POPUP -->
+                                <tr class="item-row">
+                                    <td style="position: relative;">
+                                        <!-- The text input -->
+                                        <input type="text" name="invoice_product[]" class="form-control form-control-sm item-name product-search-input" placeholder="Enter product name" autocomplete="off" required>
+                                        
+                                        <!-- The floating popup list -->
+                                        <div class="product-dropdown shadow" style="display: none;">
+                                            {% for product in products %}
+                                                <a href="#" class="dropdown-item select-product" 
+                                                   data-name="{{ product.name }}" 
+                                                   data-price="{{ product.price }}">
+                                                    <span>{{ product.name }}</span>
+                                                </a>
+                                            {% empty %}
+                                                <div class="dropdown-item text-muted">No saved products</div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="invoice_product_qty[]" class="form-control form-control-sm item-qty" inputmode="numeric" placeholder="1" value="1" required>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="text" name="invoice_product_price[]" class="form-control form-control-sm item-price" inputmode="decimal" placeholder="0.00" value="">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="invoice_product_discount[]" class="form-control form-control-sm item-discount" placeholder="0 or 10%">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                            <input type="text" name="invoice_product_sub[]" class="form-control form-control-sm item-subtotal" value="0.00" readonly>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item" style="display: none;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Totals -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <textarea name="invoice_notes" class="form-control" rows="3" placeholder="Additional Notes..."></textarea>
+                            <textarea name="custom_email" class="form-control mt-2" rows="2" placeholder="Custom email message (optional)"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Subtotal:</strong></div>
+                                <div class="col-6 text-end">{{ currency_symbol }} <span id="subtotalDisplay">0.00</span></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Discount:</strong></div>
+                                <div class="col-6 text-end">{{ currency_symbol }} <span id="discountDisplay">0.00</span></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6 text-end"><strong>Shipping:</strong></div>
+                                <div class="col-6 text-end">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">{{ currency_symbol }}</span>
+                                        <input type="text" name="invoice_shipping" class="form-control form-control-sm" id="shippingInput" inputmode="decimal" placeholder="0.00" value="">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6 text-end"><strong>Total:</strong></div>
+                                <div class="col-6 text-end"><strong>{{ currency_symbol }} <span id="totalDisplay">0.00</span></strong></div>
+                            </div>
+                            
+                            <input type="hidden" name="invoice_subtotal" id="invoiceSubtotal" value="0.00">
+                            <input type="hidden" name="invoice_discount" id="invoiceDiscount" value="0.00">
+                            <input type="hidden" name="invoice_total" id="invoiceTotal" value="0.00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save me-2"></i> Create Invoice
+                </button>
+                <a href="{% url 'invoices:invoice_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /*  Styling for the custom floating popup (DROP UP) */
+    .product-dropdown {
+        position: absolute;
+        bottom: 100%; /*  CHANGED TO BOTTOM */
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        max-height: 250px;
+        overflow-y: auto;
+        background-color: white;
+        border: 1px solid #ced4da;
+        border-radius: 6px 6px 0 0; /*  ROUNDED TOP CORNERS */
+        margin-bottom: -2px; /* Slight overlap */
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Shadow on top */
+    }
+    .product-dropdown .dropdown-item {
+        padding: 8px 15px;
+        border-bottom: 1px solid #f1f1f1;
+        cursor: pointer;
+        white-space: normal;
+    }
+    .product-dropdown .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+
+    //  1. Show/Hide the popup when input is clicked or typed in
+    $(document).on('focus click', '.product-search-input', function(e) {
+        e.stopPropagation();
+        $('.product-dropdown').hide();
+        $(this).siblings('.product-dropdown').show();
+    });
+
+    //  2. Hide popup when clicking outside
+    $(document).click(function(e) {
+        if (!$(e.target).closest('.product-search-input').length && !$(e.target).closest('.product-dropdown').length) {
+            $('.product-dropdown').hide();
+        }
+    });
+
+    //  3. Auto-fill when a product is clicked
+    $(document).on('click', '.select-product', function(e) {
+        e.preventDefault();
+        const row = $(this).closest('tr');
+        const name = $(this).data('name');
+        const price = $(this).data('price');
+        
+        row.find('.product-search-input').val(name);
+        row.find('.item-price').val(price);
+        row.find('.product-dropdown').hide();
+        
+        calculateTotals();
+    });
+
+    // 4. Allow decimal/numbers only
+    $(document).on('keypress', '.item-price, #shippingInput', function(e) {
+        const char = String.fromCharCode(e.which);
+        if (!/[0-9.]/.test(char) && e.which !== 8 && e.which !== 0 && e.which !== 46) {
+            e.preventDefault();
+        }
+        if (char === '.' && $(this).val().includes('.')) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('keypress', '.item-qty', function(e) {
+        const char = String.fromCharCode(e.which);
+        if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 0) {
+            e.preventDefault();
+        }
+    });
+
+    //  5. Add Item Row
+    $('#addItem').click(function() {
+        const firstRow = $('.item-row:first');
+        const newRow = firstRow.clone();
+        
+        newRow.find('input').val('');
+        newRow.find('.item-qty').val('1');
+        newRow.find('.item-subtotal').val('0.00');
+        newRow.find('.remove-item').show();
+        newRow.find('.product-dropdown').hide();
+        
+        $('#itemsBody').append(newRow);
+        updateRemoveButtons();
+        calculateTotals();
+    });
+    
+    // Remove item row
+    $(document).on('click', '.remove-item', function() {
+        if ($('#itemsBody tr').length > 1) {
+            $(this).closest('tr').remove();
+            updateRemoveButtons();
+            calculateTotals();
+        }
+    });
+    
+    function updateRemoveButtons() {
+        const rows = $('#itemsBody tr');
+        if (rows.length === 1) {
+            rows.find('.remove-item').hide();
+        } else {
+            rows.find('.remove-item').show();
+        }
+    }
+    
+    // Calculate totals
+    $(document).on('input change blur', '.item-qty, .item-price, .item-discount, #shippingInput', function() {
+        calculateTotals();
+    });
+    
+    function calculateTotals() {
+        let subtotal = 0;
+        let totalDiscount = 0;
+        
+        $('#itemsBody tr').each(function() {
+            const row = $(this);
+            const qty = parseInt(row.find('.item-qty').val()) || 0;
+            const price = parseFloat(row.find('.item-price').val()) || 0;
+            let discount = row.find('.item-discount').val() || '';
+            
+            let lineTotal = qty * price;
+            let lineDiscount = 0;
+            
+            if (discount) {
+                if (discount.includes('%')) {
+                    const percent = parseFloat(discount) / 100 || 0;
+                    lineDiscount = lineTotal * percent;
+                } else {
+                    lineDiscount = parseFloat(discount) || 0;
+                }
+            }
+            
+            subtotal += lineTotal;
+            totalDiscount += lineDiscount;
+            
+            const lineSubtotal = lineTotal - lineDiscount;
+            row.find('.item-subtotal').val(lineSubtotal.toFixed(2));
+        });
+        
+        const shipping = parseFloat($('#shippingInput').val()) || 0;
+        const vat = (subtotal - totalDiscount) * ({{ vat_rate|default:0 }} / 100);
+        const total = subtotal - totalDiscount + shipping + vat;
+        
+        $('#subtotalDisplay').text(subtotal.toFixed(2));
+        $('#discountDisplay').text(totalDiscount.toFixed(2));
+        $('#vatDisplay').text(vat.toFixed(2));
+        $('#totalDisplay').text(total.toFixed(2));
+        
+        $('#invoiceSubtotal').val(subtotal.toFixed(2));
+        $('#invoiceDiscount').val(totalDiscount.toFixed(2));
+        $('#invoiceVat').val(vat.toFixed(2));
+        $('#invoiceTotal').val(total.toFixed(2));
+    }
+    
+    // Format price on blur
+    $(document).on('blur', '.item-price, #shippingInput', function() {
+        let val = $(this).val().trim();
+        if (val === '' || val === '.') {
+            $(this).val('');
+        } else {
+            const num = parseFloat(val);
+            if (!isNaN(num)) {
+                $(this).val(num.toFixed(2));
+            }
+        }
+        calculateTotals();
+    });
+    
+    updateRemoveButtons();
+    calculateTotals();
+});
+</script>
+{% endblock %}
