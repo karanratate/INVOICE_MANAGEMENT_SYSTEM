@@ -150,6 +150,7 @@ activemq-data/
 *.sage.py
 
 # Environments
+.venv/
 .env
 .envrc
 .venv
@@ -158,6 +159,12 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+_pycache_/
+*.pyc
+staticfiles/
+media/
+.idea/
+.vscode/
 
 # Spyder project settings
 .spyderproject
