@@ -15,6 +15,7 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 from decimal import Decimal
+import cloudinary
 
 import os
 
